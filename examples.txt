@@ -1,0 +1,41 @@
+<?php
+	
+	$vk = new Social_APIClient_Vk(
+		array (
+			'client_id' => '...',
+			'client_secret' => '...'
+		)
+	);
+	
+	// удалить для получения нового
+	$token = '{"access_token":"...","expires_in":0,"user_id":...}';
+	
+	if($token) {
+		print "<pre>";
+		$vk->setToken($token);
+		$result = $vk->api(
+			'users.get', 
+			array(
+				'fields' => 'counters'
+			)
+		);
+		$userid = $result['response'][0]['uid'];
+		print "Friends count: " . $result['response'][0]['counters']['friends'] . "\n";
+		$result = $vk->api('groups.get', array(
+			'uid' => $userid,
+			'extended' => 1,
+			'filter' => 'admin',
+			'fields' => 'members_count'
+		));
+		print "Page -> '" . $result['response'][1]['name'] . "'\n";
+		print "\tmembers: " . $result['response'][1]['members_count'];
+		exit();
+	} else {
+		$vk->setRedirectUrl('http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF']);
+		if(!isset($_GET['code'])) {
+			print '<a href="' . $vk->getLoginUrl(array('offline', 'notify', 'friends', 'photos', 'audio', 'video', 'wall', 'groups')) . '">Login</a>';
+		} else {
+			$vk->getToken($_GET['code']);
+			print $vk->getTokenStr();
+		}
+	}
